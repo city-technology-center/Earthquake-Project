@@ -1,0 +1,7 @@
+PyQtChart
+PyQt5
+requests
+python-dateutil
+gps3
+numpy
+matplotlib
