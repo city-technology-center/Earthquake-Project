@@ -2108,68 +2108,64 @@ class mainWindow(QMainWindow):
             if not retVal:
                 QMessageBox.question(self, 'Error',"Unable to generate map to " + mapSettings.outputfile, QMessageBox.Ok)
 
-        def onGoogleMapTelemetry(self):
-            mapSettings, ok = TelemetryMapSettingsDialog.getSettings()
+    def onGoogleMapTelemetry(self):
+        mapSettings, ok = TelemetryMapSettingsDialog.getSettings()
 
-            if not ok:
-                return
-
-            if len(mapSettings.inputfile) == 0:
-                QMessageBox.question(self, 'Error', "Please provide an input file.", QMessageBox.Ok)
-                return
-
-            if len(mapSettings.outputfile) == 0:
-                QMessageBox.question(self, 'Error', "Please provide an output file.", QMessageBox.Ok)
-                return
-
-            markers = []
-            raw_list = []
-
-            try:
-                with open(mapSettings.inputfile, 'r') as f:
-                    reader = csv.reader(f)
-                    raw_list = list(reader)
-            except:
-                pass
-
+        if not ok:
+            return
+            
+        if len(mapSettings.inputfile) == 0:
+            QMessageBox.question(self, 'Error',"Please provide an input file.", QMessageBox.Ok)
+            return
+            
+        if len(mapSettings.outputfile) == 0:
+            QMessageBox.question(self, 'Error',"Please provide an output file.", QMessageBox.Ok)
+            return
+            
+        markers = []
+        raw_list = []
+        
+        try:
+            with open(mapSettings.inputfile, 'r') as f:
+                reader = csv.reader(f)
+                raw_list = list(reader)
+        except:
+            pass
+                
             # remove blank lines
             while [] in raw_list:
                 raw_list.remove([])
 
-            print(raw_list)  # raw_list değişkenini konsola yazdırın
-
+            print("Read " + str(len(raw_list)) + " lines from " + mapSettings.inputfile)
+                
             if len(raw_list) > 1:
                 # Check header row looks okay
-                if str(raw_list[
-                           0]) != "['macAddr', 'SSID', 'Strength', 'Timestamp', 'GPS', 'Latitude', 'Longitude', 'Altitude']":
-                    QMessageBox.question(self, 'Error',
-                                         "File format doesn't look like exported telemetry data saved from the telemetry window.",
-                                         QMessageBox.Ok)
+                if str(raw_list[0]) != "['macAddr', 'SSID', 'Strength', 'Timestamp', 'GPS', 'Latitude', 'Longitude', 'Altitude']":
+                    QMessageBox.question(self, 'Error',"File format doesn't look like exported telemetry data saved from the telemetry window.", QMessageBox.Ok)
                     return
-
+                        
                 # Ignore header row
                 # Range goes to last # - 1
-                for i in range(1, len(raw_list)):
-
+                for i in range (1, len(raw_list)):
+                    
                     # Plot first, last, and every Nth point
-                    if ((i % mapSettings.plotNthPoint == 0) or (i == 1) or (i == (len(raw_list) - 1))) and (
-                            len(raw_list[i]) > 0):
-
+                    if ((i % mapSettings.plotNthPoint == 0) or (i == 1) or (i == (len(raw_list)-1))) and (len(raw_list[i]) > 0):
+                        
                         if raw_list[i][4] == 'Yes':
                             # The GPS entry is valid
                             newMarker = MapMarker()
-
-                            if (i == 1) or (i == (len(raw_list) - 1)):
+                            
+                            if (i == 1) or (i == (len(raw_list)-1)):
                                 # Only put first and last marker labels on.  No need to pollute the map if there's a lot of points
                                 newMarker.label = WirelessEngine.convertUnknownToString(raw_list[i][1])
                                 newMarker.label = newMarker.label[:mapSettings.maxLabelLength]
-
+                            
                             newMarker.latitude = float(raw_list[i][5])
                             newMarker.longitude = float(raw_list[i][6])
                             newMarker.barCount = WirelessEngine.getSignalQualityFromDB0To5(int(raw_list[i][2]))
-
+                                
                             markers.append(newMarker)
-
+                    
         if len(markers) > 0:
             retVal = MapEngine.createMap(mapSettings.outputfile,mapSettings.title,markers, connectMarkers=True, openWhenDone=True, mapType=mapSettings.mapType)
             
