@@ -29,7 +29,8 @@ from dateutil import parser
 import requests
 from time import sleep
 from threading import Thread, Lock
-
+import pandas as pd
+import numpy as np
 from PyQt5.QtWidgets import QApplication, QMainWindow,  QDesktopWidget, QGraphicsSimpleTextItem, QFrame, QGraphicsView
 from PyQt5.QtWidgets import QMessageBox, QFileDialog, QInputDialog, QLineEdit, QAbstractItemView #, QSplitter
 from PyQt5.QtWidgets import QMenu, QAction, QComboBox, QLabel, QPushButton, QCheckBox, QTableWidget,QTableWidgetItem, QHeaderView
@@ -571,6 +572,7 @@ class RemoteScanThread(BaseThreadClass):
     def run(self):
         self.threadRunning = True
         
+        
         while (not self.signalStop):
             retCode, errString, wirelessNetworks = requestRemoteNetworks(self.remoteAgentIP, self.remoteAgentPort, self.interface, self.channelList)
             if (retCode == 0):
@@ -610,7 +612,8 @@ colors = [Qt.black, Qt.red, Qt.darkRed, Qt.green, Qt.darkGreen, Qt.blue, orange,
 
 # ------------------  Main Application Window  ------------------------------
 class mainWindow(QMainWindow):
-    
+
+
     # Notify signals
     resized = QtCore.pyqtSignal()
     scanresults = QtCore.pyqtSignal(dict)
@@ -652,6 +655,19 @@ class mainWindow(QMainWindow):
         super().__init__()
 
         self.hackrf = SparrowHackrf()
+        macAddrList = []
+        ssidList = []
+        frequencyList = []
+        signalStrList = []
+        firstSeenList = []
+        lastListSeen = []
+
+        self.macAddrList = macAddrList
+        self.ssidList = ssidList
+        self.frequencyList = frequencyList
+        self.signalStrList = signalStrList
+        self.firstSeenList = firstSeenList
+        self.lastListSeen = lastListSeen
         self.hackrfShowSpectrum24 = False
         self.hackrfLastSpectrumState24 = False
         self.hackrfShowSpectrum5 = False
@@ -714,7 +730,9 @@ class mainWindow(QMainWindow):
         self.updateLock = Lock()
         self.scanThread = None
         self.scanDelay = 0.5
+
         self.scanresults.connect(self.scanResults)
+
         self.singleshotscanresults.connect(self.onSingleShotScanResults)
         self.scanresultsfromadvanced.connect(self.scanResultsFromAdvanced)
         self.errmsg.connect(self.onErrMsg)
@@ -742,7 +760,7 @@ class mainWindow(QMainWindow):
         self.mainHeight = desktopSize.height() * 3 / 4
         
         self.initUI()
-        
+
         if os.geteuid() != 0:
             self.runningAsRoot = False
             self.statusBar().showMessage('You need to have root privileges to run local scans.  Please exit and rerun it as root')
@@ -865,6 +883,8 @@ class mainWindow(QMainWindow):
         
         # Scan Button
         self.btnScan = QPushButton("&Ara", self)
+
+        print("asdfghjkalsdfhgfhsdj")
         self.btnScan.setCheckable(True)
         self.btnScan.setShortcut('Ctrl+S')
         self.btnScan.setStyleSheet("background-color: rgba(0,128,192,255); border: none;")
@@ -901,6 +921,7 @@ class mainWindow(QMainWindow):
         
         # Network Table
         self.networkTable = QTableWidget(self)
+
         self.networkTable.setColumnCount(14)
         # self.networkTable.setGeometry(10, 100, self.mainWidth-60, self.mainHeight/2-105)
         self.networkTable.setShowGrid(True)
@@ -1687,12 +1708,14 @@ class mainWindow(QMainWindow):
      
     def onAdvScanUpdateSSIDs(self, wirelessNetworks):
         rowPosition = self.networkTable.rowCount()
+
         
         if rowPosition > 0:
             # Range goes to last # - 1
             for curRow in range(0, rowPosition):
                 try:
                     curData = self.networkTable.item(curRow, 2).data(Qt.UserRole+1)
+
                 except:
                     curData = None
                     
@@ -1702,6 +1725,7 @@ class mainWindow(QMainWindow):
                         curNet = wirelessNetworks[curKey]
                         if (curData.macAddr == curNet.macAddr) and (curData.channel == curNet.channel):
                             # See if we had an unknown SSID
+
                             if curData.ssid.startswith('<Unknown') and (not curNet.ssid.startswith('<Unknown')):
                                 curData.ssid = curNet.ssid
                                 self.networkTable.item(curRow, 2).setText(curData.ssid)
@@ -2031,6 +2055,7 @@ class mainWindow(QMainWindow):
         self.onGPSStatus(False)
         self.gpsTimer.start(self.gpsTimerTimeout)
         
+
     def onGoogleMap(self):
         rowPosition = self.networkTable.rowCount()
 
@@ -2045,6 +2070,7 @@ class mainWindow(QMainWindow):
             
         if len(mapSettings.outputfile) == 0:
             QMessageBox.question(self, 'Error',"Please provide an output file.", QMessageBox.Ok)
+
             return
             
         markerDict = {}
@@ -2129,6 +2155,7 @@ class mainWindow(QMainWindow):
             with open(mapSettings.inputfile, 'r') as f:
                 reader = csv.reader(f)
                 raw_list = list(reader)
+                print("Read " + raw_list + " lines from " + mapSettings.inputfile)
         except:
             pass
                 
@@ -2136,10 +2163,12 @@ class mainWindow(QMainWindow):
             while [] in raw_list:
                 raw_list.remove([])
 
-            print("Read " + str(len(raw_list)) + " lines from " + mapSettings.inputfile)
+                print("Read " + str(len(raw_list)) + " lines from " + mapSettings.inputfile)
                 
             if len(raw_list) > 1:
                 # Check header row looks okay
+
+                print(raw_list)
                 if str(raw_list[0]) != "['macAddr', 'SSID', 'Strength', 'Timestamp', 'GPS', 'Latitude', 'Longitude', 'Altitude']":
                     QMessageBox.question(self, 'Error',"File format doesn't look like exported telemetry data saved from the telemetry window.", QMessageBox.Ok)
                     return
@@ -2322,6 +2351,7 @@ class mainWindow(QMainWindow):
         self.btnScan.setEnabled(True)
         self.btnScan.setStyleSheet("background-color: rgba(2,128,192,255); border: none;")
         self.btnScan.setText('&Scan')
+
         
         # Display the data or any errors if they occurred
         if (retCode == 0):
@@ -2497,6 +2527,7 @@ class mainWindow(QMainWindow):
             # Scanning is on.  Turn red to indicate click would stop
             self.btnScan.setStyleSheet("background-color: rgba(255,0,0,255); border: none;")
             self.btnScan.setText('&Stop scanning')
+
             self.menuRemoteAgent.setEnabled(False)
             self.scanModeCombo.setEnabled(False)
             self.huntChannels.setEnabled(False)
@@ -2522,6 +2553,7 @@ class mainWindow(QMainWindow):
             if self.gpsSynchronized and (self.gpsEngine.lastCoord is not None) and (self.gpsEngine.lastCoord.isValid):
                 for curKey in wirelessNetworks.keys():
                     curNet = wirelessNetworks[curKey]
+
                     curNet.gps.copy(self.gpsEngine.lastCoord)
                     curNet.strongestgps.copy(self.gpsEngine.lastCoord)
         
@@ -2932,6 +2964,45 @@ class mainWindow(QMainWindow):
             
             self.networkTable.setItem(rowPosition, 11, DateTableWidgetItem(curNet.lastSeen.strftime("%m/%d/%Y %H:%M:%S")))
             self.networkTable.setItem(rowPosition, 12, DateTableWidgetItem(curNet.firstSeen.strftime("%m/%d/%Y %H:%M:%S")))
+
+            #curNet.frequency
+
+
+
+
+            self.macAddrList.append(curNet.macAddr)
+
+            self.ssidList.append(curNet.ssid)
+
+            self.frequencyList.append(curNet.frequency)
+
+            self.signalStrList.append(curNet.signal)
+
+            self.firstSeenList.append(curNet.firstSeen)
+
+            self.lastListSeen.append(curNet.lastSeen)
+
+            #print(self.macAddrList,"\n",self.frequencyList,"\n",
+                  #self.signalStrList,"\n", self.ssidList,"\n")
+
+            #print(len(self.macAddrList),"\n",len(self.ssidList),"\n",len(self.frequencyList),"\n",
+                      #len(self.signalStrList),"\n",len(self.firstSeenList),"\n",len(self.lastListSeen),"\n")
+
+
+            data = { "MacAddr":self.macAddrList ,
+                     "SSID":self.ssidList,
+                     "Signal Strength":self.signalStrList ,
+                     "First Seen":self.firstSeenList ,
+                     "Last Seen": self.lastListSeen }
+
+            df = pd.DataFrame(data)
+            df.drop_duplicates(subset=["MacAddr"])
+            print(df)
+            from pathlib import Path
+            filepath = Path('folder/subfolder/out.csv')
+            filepath.parent.mkdir(parents=True, exist_ok=True)
+            #Burada kaldım.
+            df.to_csv("network.csv", index=True)
             if curNet.gps.isValid:
                 self.networkTable.setItem(rowPosition, 13, QTableWidgetItem('Yes'))
             else:
@@ -3689,4 +3760,4 @@ if __name__ == '__main__':
     # Some thread is still blocking...
     # os._exit(result)
 
-    
+

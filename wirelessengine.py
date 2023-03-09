@@ -136,7 +136,6 @@ class WirelessClient(object):
         retVal += "First Seen: " + str(self.firstSeen) + "\n"
         retVal += "Last Seen: " + str(self.lastSeen) + "\n"
         retVal += "Probed SSIDs:"
-        
         if (len(self.probedSSIDs) > 0):
             for curSSID in self.probedSSIDs:
                 retVal += " " + curSSID
@@ -443,9 +442,9 @@ class WirelessEngine(object):
             f.close()
         except:
             pass
-            
+
         return macaddr
-        
+
     def getFrequencyForChannel(channelNumber):
         channelStr = str(channelNumber)
         if channelStr in channelToFreq:
@@ -585,6 +584,7 @@ class WirelessEngine(object):
                 
                 for curKey in tmpWirelessNetworks.keys():
                     curNet = tmpWirelessNetworks[curKey]
+
                     wirelessNetworks[curNet.getKey()] = tmpWirelessNetworks[curNet.getKey()]
             
         retVal = {}

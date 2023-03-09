@@ -436,6 +436,7 @@ class TelemetryDialog(QDialog):
         
         if self.winTitle == "Client Telemetry":
             self.setWindowTitle(self.winTitle + " - [" + curNet.macAddr + "] " + curNet.ssid)
+
         else:
             self.setWindowTitle(self.winTitle + " - " + curNet.ssid)
             
@@ -503,6 +504,8 @@ class TelemetryDialog(QDialog):
             
         # ['macAddr','SSID', 'Strength', 'Timestamp','GPS', 'Latitude', 'Longitude', 'Altitude']
         self.locationTable.setItem(rowPosition, 0, QTableWidgetItem(curNet.macAddr))
+        print(curNet.macAddr)
+        print("ĞAAAAAAAAAAAAAAAAAAAAAAAAA")
         tmpssid = curNet.ssid
         if (len(tmpssid) == 0):
             tmpssid = '<Unknown>'
